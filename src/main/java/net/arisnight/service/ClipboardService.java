@@ -5,7 +5,6 @@ import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.util.Duration;
 
-/** Копирование секретов с очисткой буфера по таймеру (только если там всё ещё наше значение). */
 public final class ClipboardService {
     private static PauseTransition timer;
 

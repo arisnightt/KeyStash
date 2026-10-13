@@ -1,15 +1,21 @@
 package net.arisnight.ui;
 
+import net.arisnight.generator.StrengthEstimator;
+import net.arisnight.i18n.I18n;
 import net.arisnight.model.DemoData;
 import net.arisnight.model.Entry;
 import net.arisnight.service.ClipboardService;
+import net.arisnight.service.Settings;
 import net.arisnight.service.UrlOpener;
 import net.arisnight.ui.dialog.EntryDialog;
 import net.arisnight.ui.dialog.GeneratorDialog;
+import net.arisnight.ui.dialog.SettingsDialog;
 import net.arisnight.ui.util.Icons;
 import javafx.animation.FadeTransition;
 import javafx.animation.SequentialTransition;
+import javafx.application.ColorScheme;
 import javafx.application.HostServices;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -17,45 +23,64 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-/** Главное окно: навигация | список | детали + статус-бар. Данные пока демонстрационные. */
+import static net.arisnight.i18n.I18n.t;
+
 public final class MainView extends StackPane {
 
     private static final String[] PALETTE = {
             "#24292f", "#229ed9", "#d50c2d", "#1b2838", "#0078d4", "#107c10", "#c239b3", "#ca5010"};
-    private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("d MMM yyyy", Locale.forLanguageTag("ru"));
-    private static final Duration CLIPBOARD_TTL = Duration.seconds(30);
+    private static final String NAV_ALL = "all";
+    private static final String NAV_FAV = "fav";
+    private static final String NAV_CAT = "cat:";
 
+    private final Settings settings = new Settings();
     private final HostServices host;
     private final List<Entry> all = new ArrayList<>(DemoData.entries());
 
-    private Predicate<Entry> navFilter = e -> true;
+    private String navId = NAV_ALL;
+    private int sortIndex;
     private Entry selected;
     private boolean pwShown;
     private boolean dark;
 
-    private final VBox nav = new VBox(2);
+    private VBox nav;
     private Node navHead;
-    private final VBox items = new VBox(2);
-    private final VBox detail = new VBox(12);
-    private final Label listTitle = new Label("Все записи");
-    private final TextField search = new TextField();
-    private final ComboBox<String> sort = new ComboBox<>();
-    private final Label toast = new Label();
+    private VBox items;
+    private VBox detail;
+    private Label listTitle;
+    private TextField search;
+    private ComboBox<String> sort;
+    private Label toast;
     private SequentialTransition toastAnim;
 
     public MainView(HostServices host) {
         this.host = host;
+        I18n.setLanguage(settings.language());
+        applyTheme(systemIsDark());
+        build();
+    }
+
+    private void build() {
+        String prevQuery = search == null ? "" : search.getText();
+        if (toastAnim != null) toastAnim.stop();
+
+        nav = new VBox(2);
+        items = new VBox(2);
+        detail = new VBox(12);
+        listTitle = new Label();
+        search = new TextField();
+        sort = new ComboBox<>();
+        toast = new Label();
 
         BorderPane content = new BorderPane();
         content.setTop(buildTitleBar());
@@ -70,47 +95,53 @@ public final class MainView extends StackPane {
         StackPane.setAlignment(toast, Pos.BOTTOM_CENTER);
         StackPane.setMargin(toast, new Insets(0, 0, 44, 0));
 
-        getChildren().addAll(content, toast);
+        getChildren().setAll(content, toast);
+        search.setText(prevQuery);
         refreshList();
     }
 
-    /* ======================= Заголовок ======================= */
-
     private Node buildTitleBar() {
-        StackPane logo = new StackPane(new Rectangle(18, 18) {{
-            setArcWidth(8);
-            setArcHeight(8);
-            getStyleClass().add("logo");
-        }}, Icons.get("key"));
-        logo.getChildren().get(1).getStyleClass().add("on-accent");
-        logo.setMaxSize(18, 18);
-        logo.setScaleX(0.9);
-        logo.setScaleY(0.9);
-
-        Label name = new Label("KeyStash");
-        name.getStyleClass().add("muted-s");
-
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        Button theme = btn("Тема", "sun", "ks-btn-sub");
+        Button theme = btn(t("title.theme"), "sun", "ks-btn-sub");
         theme.setOnAction(e -> toggleTheme());
-        Button lock = btn("Заблокировать", "lock", "ks-btn-sub");
-        lock.setOnAction(e -> showToast("Блокировка пока не реализована"));
+        Button lock = btn(t("title.lock"), "lock", "ks-btn-sub");
+        lock.setOnAction(e -> showToast(t("toast.lockNotImpl")));
 
-        HBox bar = new HBox(8, logo, name, spacer, theme, lock);
+        HBox bar = new HBox(8, spacer, theme, lock);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.getStyleClass().add("titlebar");
         return bar;
     }
 
     private void toggleTheme() {
-        dark = !dark;
-        if (dark) getStyleClass().add("dark");
-        else getStyleClass().remove("dark");
+        applyTheme(!dark);
+        settings.setDark(dark);
+        settings.save();
     }
 
-    /* ======================= Навигация ======================= */
+    private static boolean systemIsDark() {
+        return Platform.getPreferences().getColorScheme() == ColorScheme.DARK;
+    }
+
+    private void applyTheme(boolean value) {
+        dark = value;
+        getStyleClass().remove("dark");
+        if (dark) getStyleClass().add("dark");
+    }
+
+    private void openSettings() {
+        SettingsDialog.show(getScene().getWindow(), dark, settings, () -> {
+            I18n.setLanguage(settings.language());
+            build();
+            showToast(t("toast.settingsSaved"));
+        });
+    }
+
+    private Duration clipboardTtl() {
+        return Duration.seconds(settings.clipboardSeconds());
+    }
 
     private Node buildNav() {
         nav.getStyleClass().add("nav");
@@ -118,7 +149,7 @@ public final class MainView extends StackPane {
         nav.setMinWidth(248);
         nav.setMaxWidth(248);
 
-        search.setPromptText("Поиск по записям");
+        search.setPromptText(t("search.prompt"));
         search.getStyleClass().add("ks-search");
         search.textProperty().addListener((o, a, b) -> refreshList());
         StackPane.setAlignment(search, Pos.CENTER_LEFT);
@@ -132,28 +163,27 @@ public final class MainView extends StackPane {
         return nav;
     }
 
-    /** Пересобирает навигацию (счётчики и список категорий), например после добавления записи. */
     private void fillNav() {
         nav.getChildren().setAll(navHead);
         ToggleGroup group = new ToggleGroup();
-        nav.getChildren().add(navItem(group, Icons.get("all"), "Все записи", all.size(), e -> true, true));
-        nav.getChildren().add(navItem(group, Icons.get("star"), "Избранное",
-                (int) all.stream().filter(Entry::favorite).count(), Entry::favorite, false));
+        nav.getChildren().add(navItem(group, Icons.get("all"), NAV_ALL, t("nav.all"), all.size()));
+        nav.getChildren().add(navItem(group, Icons.get("star"), NAV_FAV, t("nav.favorites"),
+                (int) all.stream().filter(Entry::favorite).count()));
 
-        nav.getChildren().add(header("Категории"));
+        nav.getChildren().add(header(t("nav.categories")));
         for (String c : all.stream().map(Entry::category).distinct().sorted().toList()) {
             Circle dot = new Circle(4);
             dot.setStyle("-fx-fill:" + color(c) + ";");
             HBox.setMargin(dot, new Insets(0, 4, 0, 4));
             int n = (int) all.stream().filter(e -> e.category().equals(c)).count();
-            nav.getChildren().add(navItem(group, dot, c, n, e -> e.category().equals(c), false));
+            nav.getChildren().add(navItem(group, dot, NAV_CAT + c, catLabel(c), n));
         }
 
-        nav.getChildren().add(header("Теги"));
+        nav.getChildren().add(header(t("nav.tags")));
         FlowPane tags = new FlowPane(6, 6);
         tags.setPadding(new Insets(0, 10, 0, 10));
-        all.stream().flatMap(e -> e.tags().stream()).distinct().sorted().forEach(t -> {
-            Label l = new Label(t);
+        all.stream().flatMap(e -> e.tags().stream()).distinct().sorted().forEach(tag -> {
+            Label l = new Label(tag);
             l.getStyleClass().add("tag");
             tags.getChildren().add(l);
         });
@@ -163,24 +193,22 @@ public final class MainView extends StackPane {
         VBox.setVgrow(spacer, Priority.ALWAYS);
         nav.getChildren().add(spacer);
 
-        nav.getChildren().add(navAction("trash", "Корзина", -1, () -> showToast("Корзина — в планах (P2)")));
-        nav.getChildren().add(navAction("gen", "Генератор паролей", -1, this::openGenerator));
-        nav.getChildren().add(navAction("gear", "Настройки", -1, () -> showToast("Настройки — TODO")));
+        nav.getChildren().add(navAction("trash", t("nav.trash"), -1, () -> showToast(t("toast.trash"))));
+        nav.getChildren().add(navAction("gen", t("nav.generator"), -1, this::openGenerator));
+        nav.getChildren().add(navAction("gear", t("nav.settings"), -1, this::openSettings));
     }
 
-    private ToggleButton navItem(ToggleGroup g, Node icon, String text, int count,
-                                 Predicate<Entry> filter, boolean on) {
+    private ToggleButton navItem(ToggleGroup g, Node icon, String id, String text, int count) {
         ToggleButton tb = new ToggleButton();
         tb.getStyleClass().add("ni");
         tb.setToggleGroup(g);
         tb.setMaxWidth(Double.MAX_VALUE);
         tb.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         tb.setGraphic(navContent(icon, text, count, tb));
-        tb.setSelected(on);
+        tb.setSelected(id.equals(navId));
         tb.setOnAction(e -> {
             if (!tb.isSelected()) tb.setSelected(true);
-            navFilter = filter;
-            listTitle.setText(text);
+            navId = id;
             refreshList();
         });
         return tb;
@@ -218,47 +246,62 @@ public final class MainView extends StackPane {
         return l;
     }
 
+    private Predicate<Entry> navFilter() {
+        if (NAV_FAV.equals(navId)) return Entry::favorite;
+        if (navId.startsWith(NAV_CAT)) {
+            String c = navId.substring(NAV_CAT.length());
+            return e -> e.category().equals(c);
+        }
+        return e -> true;
+    }
+
+    private String navTitle() {
+        if (NAV_FAV.equals(navId)) return t("nav.favorites");
+        if (navId.startsWith(NAV_CAT)) return catLabel(navId.substring(NAV_CAT.length()));
+        return t("nav.all");
+    }
+
+    private static String catLabel(String category) {
+        return category == null || category.isBlank() ? t("nav.noCategory") : category;
+    }
+
     private void addEntry() {
         List<String> categories = all.stream().map(Entry::category).distinct().sorted().toList();
         EntryDialog.show(getScene().getWindow(), dark, categories).ifPresent(entry -> {
             all.add(entry);
             // показываем новую запись: сбрасываем фильтры и выбираем её
-            navFilter = e -> true;
-            listTitle.setText("Все записи");
+            navId = NAV_ALL;
             selected = entry;
             pwShown = false;
             search.clear();
             fillNav();
             refreshList();
-            showToast("Запись «" + entry.name() + "» добавлена");
+            showToast(t("toast.entryAdded", entry.name()));
         });
     }
 
     private void openGenerator() {
         GeneratorDialog.show(getScene().getWindow(), dark, text -> {
-            ClipboardService.copySecret(text, CLIPBOARD_TTL);
-            showToast("Пароль скопирован. Буфер очистится через 30 с");
+            ClipboardService.copySecret(text, clipboardTtl());
+            showToast(t("toast.passwordCopied", settings.clipboardSeconds()));
         });
     }
 
-    /* ======================= Список и детали ======================= */
-
     private Node buildMain() {
-        // список
         listTitle.getStyleClass().add("h1");
         Region sp = new Region();
         HBox.setHgrow(sp, Priority.ALWAYS);
-        Button add = btn("Добавить", "plus", "ks-btn-pri");
+        Button add = btn(t("list.add"), "plus", "ks-btn-pri");
         add.setOnAction(e -> addEntry());
         HBox head = new HBox(8, listTitle, sp, add);
         head.setAlignment(Pos.CENTER_LEFT);
         head.setPadding(new Insets(16, 16, 8, 16));
 
-        sort.getItems().addAll("по названию", "по дате изменения", "по дате создания");
-        sort.getSelectionModel().selectFirst();
+        sort.getItems().addAll(t("sort.name"), t("sort.modified"), t("sort.created"));
+        sort.getSelectionModel().select(sortIndex);
         sort.getStyleClass().add("ks-combo");
         sort.setOnAction(e -> refreshList());
-        Label sl = new Label("Сортировка:");
+        Label sl = new Label(t("list.sort"));
         sl.getStyleClass().add("muted");
         HBox sortRow = new HBox(6, sl, sort);
         sortRow.setAlignment(Pos.CENTER_LEFT);
@@ -274,7 +317,6 @@ public final class MainView extends StackPane {
         list.setMinWidth(260);
         list.setMaxWidth(340);
 
-        // детали
         detail.getStyleClass().add("detail");
         ScrollPane detailScroll = scroll(detail);
         HBox.setHgrow(detailScroll, Priority.ALWAYS);
@@ -293,14 +335,16 @@ public final class MainView extends StackPane {
     }
 
     private void refreshList() {
+        listTitle.setText(navTitle());
         String q = search.getText() == null ? "" : search.getText().trim().toLowerCase();
-        Comparator<Entry> cmp = switch (sort.getSelectionModel().getSelectedIndex()) {
+        sortIndex = Math.max(0, sort.getSelectionModel().getSelectedIndex());
+        Comparator<Entry> cmp = switch (sortIndex) {
             case 1 -> Comparator.comparing(Entry::modified, Comparator.reverseOrder());
             case 2 -> Comparator.comparing(Entry::created, Comparator.reverseOrder());
             default -> Comparator.comparing(Entry::name, String.CASE_INSENSITIVE_ORDER);
         };
         List<Entry> shown = all.stream()
-                .filter(navFilter)
+                .filter(navFilter())
                 .filter(e -> q.isEmpty() || e.matches(q))
                 .sorted(cmp)
                 .toList();
@@ -347,62 +391,60 @@ public final class MainView extends StackPane {
     private void refreshDetail() {
         detail.getChildren().clear();
         if (selected == null) {
-            Label empty = new Label("Нет записей");
+            Label empty = new Label(t("detail.empty"));
             empty.getStyleClass().add("muted");
             detail.getChildren().add(empty);
             return;
         }
         Entry e = selected;
 
-        // шапка
         Label title = new Label(e.name());
         title.getStyleClass().add("h2");
-        String sub = e.category() + (e.tags().isEmpty() ? ""
-                : " · " + e.tags().stream().map(t -> "#" + t).collect(Collectors.joining(" ")));
+        String sub = catLabel(e.category()) + (e.tags().isEmpty() ? ""
+                : " · " + e.tags().stream().map(tag -> "#" + tag).collect(Collectors.joining(" ")));
         Label subtitle = new Label(sub);
         subtitle.getStyleClass().add("muted-s");
 
         Region sp = new Region();
         HBox.setHgrow(sp, Priority.ALWAYS);
-        Button fav = iconBtn("star", "Избранное", "ks-btn-sub");
+        Button fav = iconBtn("star", t("nav.favorites"), "ks-btn-sub");
         if (e.favorite()) fav.getGraphic().getStyleClass().add("fav");
-        fav.setOnAction(ev -> showToast("Избранное — TODO"));
-        Button edit = btn("Изменить", "edit");
-        edit.setOnAction(ev -> showToast("Редактирование — TODO"));
-        Button del = iconBtn("trash", "Удалить", "ks-btn-sub", "ks-btn-dng");
-        del.setOnAction(ev -> showToast("Удаление — TODO"));
+        fav.setOnAction(ev -> showToast(t("toast.todo", t("nav.favorites"))));
+        Button edit = btn(t("action.edit"), "edit");
+        edit.setOnAction(ev -> showToast(t("toast.todo", t("action.edit"))));
+        Button del = iconBtn("trash", t("action.delete"), "ks-btn-sub", "ks-btn-dng");
+        del.setOnAction(ev -> showToast(t("toast.todo", t("action.delete"))));
 
         HBox head = new HBox(16, avatar(e, 56, 12), new VBox(title, subtitle), sp, new HBox(4, fav, edit, del));
         head.setAlignment(Pos.CENTER_LEFT);
         head.setPadding(new Insets(0, 0, 8, 0));
 
-        // карточка с полями
         Label loginV = new Label(e.login());
         loginV.setWrapText(true);
-        Button copyLogin = iconBtn("copy", "Копировать логин", "ks-btn-sub");
-        copyLogin.setOnAction(ev -> copy(e.login(), "Логин"));
+        Button copyLogin = iconBtn("copy", t("tip.copyLogin"), "ks-btn-sub");
+        copyLogin.setOnAction(ev -> copy(e.login(), "toast.loginCopied"));
 
         Label pw = new Label(pwShown ? e.password() : "•".repeat(Math.min(e.password().length(), 16)));
         pw.getStyleClass().add("mono");
         pw.setWrapText(true);
         VBox pwBox = new VBox(4, pw, strength(e.strength()));
-        Button eye = iconBtn("eye", pwShown ? "Скрыть" : "Показать", "ks-btn-sub");
+        Button eye = iconBtn("eye", pwShown ? t("tip.hide") : t("tip.show"), "ks-btn-sub");
         eye.setOnAction(ev -> {
             pwShown = !pwShown;
             refreshDetail();
         });
-        Button copyPw = iconBtn("copy", "Копировать пароль", "ks-btn-sub");
-        copyPw.setOnAction(ev -> copy(e.password(), "Пароль"));
+        Button copyPw = iconBtn("copy", t("tip.copyPassword"), "ks-btn-sub");
+        copyPw.setOnAction(ev -> copy(e.password(), "toast.passwordCopied"));
 
         Hyperlink link = new Hyperlink(e.url());
         link.setOnAction(ev -> openUrl(e.url()));
-        Button openBtn = iconBtn("open", "Открыть в браузере", "ks-btn-sub");
+        Button openBtn = iconBtn("open", t("tip.open"), "ks-btn-sub");
         openBtn.setOnAction(ev -> openUrl(e.url()));
 
         VBox card = new VBox(
-                field("Логин", loginV, copyLogin),
-                field("Пароль", pwBox, eye, copyPw),
-                field("Адрес", link, openBtn));
+                field(t("field.login"), loginV, copyLogin),
+                field(t("field.password"), pwBox, eye, copyPw),
+                field(t("field.url"), link, openBtn));
         card.getStyleClass().add("card");
         for (int i = 1; i < card.getChildren().size(); i++) card.getChildren().get(i).getStyleClass().add("fld-sep");
         detail.getChildren().addAll(head, card);
@@ -411,18 +453,22 @@ public final class MainView extends StackPane {
             Label note = new Label(e.note());
             note.getStyleClass().add("muted-s-14");
             note.setWrapText(true);
-            VBox noteCard = new VBox(field("Заметки", note));
+            VBox noteCard = new VBox(field(t("field.notes"), note));
             noteCard.getStyleClass().add("card");
             detail.getChildren().add(noteCard);
         }
 
-        Label cr = new Label("Создано: " + DATE.format(e.created()));
-        Label md = new Label("Изменено: " + DATE.format(e.modified()));
+        Label cr = new Label(t("meta.created", date(e.created())));
+        Label md = new Label(t("meta.modified", date(e.modified())));
         cr.getStyleClass().add("muted");
         md.getStyleClass().add("muted");
         HBox meta = new HBox(24, cr, md);
         meta.setPadding(new Insets(4, 4, 0, 4));
         detail.getChildren().add(meta);
+    }
+
+    private static String date(LocalDate d) {
+        return DateTimeFormatter.ofPattern("d MMM yyyy", I18n.locale()).format(d);
     }
 
     private static HBox field(String label, Node value, Node... actions) {
@@ -452,21 +498,18 @@ public final class MainView extends StackPane {
         bar.setPrefSize(96, 4);
         bar.setMaxSize(96, 4);
 
-        String lbl = s >= 90 ? "Отличный" : s >= 75 ? "Хороший" : s >= 50 ? "Средний" : "Слабый";
-        Label t = new Label(lbl);
-        t.getStyleClass().add("muted-s");
-        HBox box = new HBox(8, bar, t);
+        Label lbl = new Label(StrengthEstimator.label(s));
+        lbl.getStyleClass().add("muted-s");
+        HBox box = new HBox(8, bar, lbl);
         box.setAlignment(Pos.CENTER_LEFT);
         return box;
     }
 
-    /* ======================= Статус-бар ======================= */
-
     private Node buildStatusBar() {
-        Label ok = new Label("Хранилище разблокировано", Icons.get("shield"));
+        Label ok = new Label(t("status.unlocked"), Icons.get("shield"));
         ok.getStyleClass().add("status-ok");
         // TODO: подключить реальный таймер автоблокировки
-        Label lock = new Label("Автоблокировка через 5:00", Icons.get("clock"));
+        Label lock = new Label(t("status.autolock"), Icons.get("clock"));
         lock.getStyleClass().add("muted-s");
         Region sp = new Region();
         HBox.setHgrow(sp, Priority.ALWAYS);
@@ -478,15 +521,13 @@ public final class MainView extends StackPane {
         return bar;
     }
 
-    /* ======================= Утилиты ======================= */
-
-    private void copy(String value, String what) {
-        ClipboardService.copySecret(value, CLIPBOARD_TTL);
-        showToast(what + " скопирован. Буфер очистится через 30 с");
+    private void copy(String value, String toastKey) {
+        ClipboardService.copySecret(value, clipboardTtl());
+        showToast(t(toastKey, settings.clipboardSeconds()));
     }
 
     private void openUrl(String url) {
-        if (!UrlOpener.open(host, url)) showToast("Разрешены только адреса http и https");
+        if (!UrlOpener.open(host, url)) showToast(t("toast.badUrl"));
     }
 
     private void showToast(String msg) {

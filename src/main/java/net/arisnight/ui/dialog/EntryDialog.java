@@ -23,10 +23,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-/** Окно создания новой записи. Возвращает запись или пусто, если пользователь отменил. */
-public final class EntryDialog {
+import static net.arisnight.i18n.I18n.t;
 
-    private static final String NO_CATEGORY = "Без категории";
+public final class EntryDialog {
 
     private final TextField name = new TextField();
     private final TextField login = new TextField();
@@ -35,7 +34,7 @@ public final class EntryDialog {
     private final TextField url = new TextField();
     private final ComboBox<String> category = new ComboBox<>();
     private final TextField tags = new TextField();
-    private final CheckBox fav = new CheckBox("Добавить в избранное");
+    private final CheckBox fav = new CheckBox(t("entry.favorite"));
     private final TextArea note = new TextArea();
     private final Label error = new Label();
     private final Label strengthLbl = new Label();
@@ -49,15 +48,14 @@ public final class EntryDialog {
         Stage stage = new Stage();
         stage.initOwner(owner);
         stage.initModality(Modality.WINDOW_MODAL);
-        stage.setTitle("Новая запись");
-        // окно не выше 85% рабочей области экрана, иначе кнопки могут уйти за его край
+        stage.setTitle(t("entry.title"));
         stage.setMaxHeight(Screen.getPrimary().getVisualBounds().getHeight() * 0.85);
 
-        name.setPromptText("Например, GitHub");
-        login.setPromptText("Логин или e-mail");
+        name.setPromptText(t("entry.namePrompt"));
+        login.setPromptText(t("entry.loginPrompt"));
         url.setPromptText("example.com");
-        tags.setPromptText("через запятую: 2fa, почта");
-        note.setPromptText("Необязательно");
+        tags.setPromptText(t("entry.tagsPrompt"));
+        note.setPromptText(t("entry.notePrompt"));
         note.setPrefRowCount(2);
         note.setWrapText(true);
         note.getStyleClass().add("ks-area");
@@ -65,7 +63,6 @@ public final class EntryDialog {
         pass.getStyleClass().add("mono");
         passPlain.getStyleClass().add("mono");
 
-        // пароль: скрытое и видимое поля синхронизированы
         passPlain.textProperty().bindBidirectional(pass.textProperty());
         setShown(false);
         StackPane passStack = new StackPane(pass, passPlain);
@@ -83,8 +80,8 @@ public final class EntryDialog {
         pass.textProperty().addListener((o, a, b) -> updateStrength());
 
         category.setEditable(true);
-        category.getItems().addAll(categories);
-        category.getEditor().setPromptText(NO_CATEGORY);
+        category.getItems().addAll(categories.stream().filter(c -> !c.isBlank()).toList());
+        category.getEditor().setPromptText(t("nav.noCategory"));
         category.getStyleClass().add("ks-input-combo");
         category.setMaxWidth(Double.MAX_VALUE);
 
@@ -92,25 +89,25 @@ public final class EntryDialog {
         error.visibleProperty().bind(error.textProperty().isNotEmpty());
         error.managedProperty().bind(error.visibleProperty());
 
-        Label title = new Label("Новая запись");
+        Label title = new Label(t("entry.title"));
         title.getStyleClass().add("h3");
         VBox form = new VBox(12, title,
-                block("Название *", name),
-                block("Логин", login),
-                block("Пароль", new VBox(4, passRow, strengthLbl)),
-                block("Адрес", url),
-                block("Категория", category),
-                block("Теги", tags),
+                block(t("entry.name"), name),
+                block(t("field.login"), login),
+                block(t("field.password"), new VBox(4, passRow, strengthLbl)),
+                block(t("field.url"), url),
+                block(t("entry.category"), category),
+                block(t("entry.tags"), tags),
                 fav,
-                block("Заметки", note),
+                block(t("field.notes"), note),
                 error);
         form.setPadding(new Insets(24));
 
-        Button cancel = new Button("Отмена");
+        Button cancel = new Button(t("action.cancel"));
         cancel.getStyleClass().add("ks-btn");
         cancel.setCancelButton(true);
         cancel.setOnAction(e -> stage.close());
-        Button save = new Button("Сохранить");
+        Button save = new Button(t("action.save"));
         save.getStyleClass().addAll("ks-btn", "ks-btn-pri");
         save.setDefaultButton(true);
         save.setOnAction(e -> save(stage));
@@ -121,7 +118,6 @@ public final class EntryDialog {
         HBox footer = new HBox(8, cancel, save);
         footer.getStyleClass().add("dlg-footer");
 
-        // форма прокручивается, а кнопки внизу всегда остаются на виду
         ScrollPane scroll = new ScrollPane(form);
         scroll.setFitToWidth(true);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
@@ -145,12 +141,11 @@ public final class EntryDialog {
     private void save(Stage stage) {
         String n = name.getText().trim();
         if (n.isEmpty()) {
-            error.setText("Введите название записи");
+            error.setText(t("entry.nameRequired"));
             name.requestFocus();
             return;
         }
-        String cat = category.getEditor().getText().trim();
-        if (cat.isEmpty()) cat = NO_CATEGORY;
+        String cat = category.getEditor().getText().trim();   // пусто = без категории
         List<String> tg = Arrays.stream(tags.getText().split("[,;]"))
                 .map(String::trim)
                 .map(t -> t.startsWith("#") ? t.substring(1).trim() : t)
@@ -173,7 +168,7 @@ public final class EntryDialog {
 
     private void updateStrength() {
         String pw = pass.getText();
-        strengthLbl.setText(pw.isEmpty() ? "" : "Надёжность: " + StrengthEstimator.label(StrengthEstimator.score(pw)));
+        strengthLbl.setText(pw.isEmpty() ? "" : t("entry.strength", StrengthEstimator.label(StrengthEstimator.score(pw))));
     }
 
     private static VBox block(String label, Node input) {

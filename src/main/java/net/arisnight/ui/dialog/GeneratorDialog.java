@@ -17,7 +17,8 @@ import javafx.stage.Window;
 
 import java.util.function.Consumer;
 
-/** Окно генератора паролей (аналог диалога из HTML-макета). */
+import static net.arisnight.i18n.I18n.t;
+
 public final class GeneratorDialog {
 
     private final TextFlow out = new TextFlow();
@@ -25,14 +26,14 @@ public final class GeneratorDialog {
     private final Label lbl = new Label();
     private final Slider len = new Slider(4, 128, 20);
     private final Label lenVal = new Label("20");
-    private final Label lenLbl = new Label("Длина");
-    private final CheckBox lo = new CheckBox("a–z строчные");
-    private final CheckBox up = new CheckBox("A–Z прописные");
-    private final CheckBox di = new CheckBox("0–9 цифры");
-    private final CheckBox sy = new CheckBox("!@# спецсимволы");
-    private final CheckBox ex = new CheckBox("Исключить похожие символы (0 O l 1 I)");
-    private final ToggleButton modePwd = new ToggleButton("Пароль");
-    private final ToggleButton modePhrase = new ToggleButton("Парольная фраза");
+    private final Label lenLbl = new Label(t("gen.length"));
+    private final CheckBox lo = new CheckBox(t("gen.lower"));
+    private final CheckBox up = new CheckBox(t("gen.upper"));
+    private final CheckBox di = new CheckBox(t("gen.digits"));
+    private final CheckBox sy = new CheckBox(t("gen.symbols"));
+    private final CheckBox ex = new CheckBox(t("gen.exclude"));
+    private final ToggleButton modePwd = new ToggleButton(t("gen.mode.password"));
+    private final ToggleButton modePhrase = new ToggleButton(t("gen.mode.phrase"));
     private final Consumer<String> onCopy;
     private String current = "";
 
@@ -45,10 +46,9 @@ public final class GeneratorDialog {
         Stage stage = new Stage();
         stage.initOwner(owner);
         stage.initModality(Modality.WINDOW_MODAL);
-        stage.setTitle("Генератор паролей");
+        stage.setTitle(t("gen.title"));
         stage.setResizable(false);
 
-        // результат
         out.getStyleClass().add("gen-out");
         out.setPrefWidth(300);
         out.setMaxWidth(Double.MAX_VALUE);
@@ -62,14 +62,12 @@ public final class GeneratorDialog {
         outBox.setAlignment(Pos.CENTER_LEFT);
         outBox.getStyleClass().add("out");
 
-        // энтропия
         ent.getStyleClass().add("muted-s");
         Region sp = new Region();
         HBox.setHgrow(sp, Priority.ALWAYS);
         HBox entRow = new HBox(ent, sp, lbl);
         entRow.setPadding(new Insets(2, 2, 6, 2));
 
-        // режимы
         ToggleGroup g = new ToggleGroup();
         modePwd.setToggleGroup(g);
         modePhrase.setToggleGroup(g);
@@ -85,7 +83,6 @@ public final class GeneratorDialog {
         HBox seg = new HBox(modePwd, modePhrase);
         seg.getStyleClass().add("seg");
 
-        // длина
         len.setBlockIncrement(1);
         len.setMajorTickUnit(1);
         len.setMinorTickCount(0);
@@ -98,7 +95,6 @@ public final class GeneratorDialog {
         HBox lenRow = new HBox(12, lenLbl, len, lenVal);
         lenRow.setAlignment(Pos.CENTER_LEFT);
 
-        // чекбоксы
         for (CheckBox c : new CheckBox[]{lo, up, di, sy, ex}) {
             c.setSelected(true);
             c.selectedProperty().addListener((o, a, b) -> generate());
@@ -119,12 +115,12 @@ public final class GeneratorDialog {
                 len.setMin(3);
                 len.setMax(10);
                 len.setValue(5);
-                lenLbl.setText("Слов");
+                lenLbl.setText(t("gen.words"));
             } else {
                 len.setMax(128);
                 len.setMin(4);
                 len.setValue(20);
-                lenLbl.setText("Длина");
+                lenLbl.setText(t("gen.length"));
             }
             lenVal.setText(String.valueOf((int) len.getValue()));
             generate();
@@ -134,16 +130,15 @@ public final class GeneratorDialog {
             generate();
         });
 
-        Label title = new Label("Генератор паролей");
+        Label title = new Label(t("gen.title"));
         title.getStyleClass().add("h3");
         VBox content = new VBox(12, title, outBox, entRow, seg, lenRow, opts);
         content.setPadding(new Insets(24));
 
-        // подвал
-        Button close = new Button("Закрыть");
+        Button close = new Button(t("action.close"));
         close.getStyleClass().add("ks-btn");
         close.setOnAction(e -> stage.close());
-        Button use = new Button("Использовать");
+        Button use = new Button(t("action.use"));
         use.getStyleClass().addAll("ks-btn", "ks-btn-pri");
         use.setOnAction(e -> {
             onCopy.accept(current);
@@ -191,8 +186,9 @@ public final class GeneratorDialog {
                 out.getChildren().add(t);
             }
             double bits = r.entropyBits();
-            ent.setText(Math.round(bits) + " бит энтропии");
-            lbl.setText(bits >= 100 ? "Отличный" : bits >= 70 ? "Хороший" : bits >= 50 ? "Средний" : "Слабый");
+            ent.setText(t("gen.entropy", Math.round(bits)));
+            lbl.setText(t(bits >= 100 ? "strength.excellent" : bits >= 70 ? "strength.good"
+                    : bits >= 50 ? "strength.medium" : "strength.weak"));
             lbl.setStyle("-fx-font-weight:bold;-fx-text-fill:"
                     + (bits >= 70 ? "-ks-ok" : bits >= 50 ? "-ks-warn" : "-ks-bad") + ";");
         } catch (IllegalArgumentException ex) {

@@ -19,7 +19,6 @@ public record Entry(
         LocalDate created,
         LocalDate modified) {
 
-    /** q должен быть уже приведён к нижнему регистру. */
     public boolean matches(String q) {
         return contains(name, q) || contains(login, q) || contains(url, q)
                 || contains(category, q) || contains(note, q)

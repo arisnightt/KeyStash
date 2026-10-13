@@ -13,9 +13,9 @@ public class App extends Application {
         Scene scene = new Scene(view, 1180, 760);
         scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
         stage.setTitle("KeyStash");
-        stage.setMinWidth(900);
-        stage.setMinHeight(560);
         stage.setScene(scene);
+        stage.setResizable(false);
+        stage.sizeToScene();
         stage.show();
     }
 

@@ -1,13 +1,10 @@
 package net.arisnight.generator;
 
-/**
- * Грубая оценка надёжности введённого пароля: длина × размер используемых алфавитов.
- * Это верхняя граница, она не знает про словарные слова и шаблоны, поэтому не заменяет полноценный zxcvbn-подобный анализ.
- */
+import static net.arisnight.i18n.I18n.t;
+
 public final class StrengthEstimator {
     private StrengthEstimator() {}
 
-    /** Оценка 0..100 (примерно соответствует числу бит энтропии, но не больше 100). */
     public static int score(String password) {
         if (password == null || password.isEmpty()) return 0;
         boolean lower = false, upper = false, digit = false, other = false;
@@ -23,6 +20,7 @@ public final class StrengthEstimator {
     }
 
     public static String label(int score) {
-        return score >= 90 ? "Отличный" : score >= 75 ? "Хороший" : score >= 50 ? "Средний" : "Слабый";
+        return t(score >= 90 ? "strength.excellent" : score >= 75 ? "strength.good"
+                : score >= 50 ? "strength.medium" : "strength.weak");
     }
 }

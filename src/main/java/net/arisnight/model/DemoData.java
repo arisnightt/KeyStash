@@ -3,7 +3,6 @@ package net.arisnight.model;
 import java.time.LocalDate;
 import java.util.List;
 
-/** Демо-данные для макета. Заменить загрузкой из зашифрованного хранилища. */
 public final class DemoData {
     private DemoData() {}
 

@@ -6,7 +6,6 @@ import javafx.scene.shape.SVGPath;
 
 import java.util.Map;
 
-/** Иконки из HTML-макета (сетка 16×16, обводка). Цвет задаётся в style.css. */
 public final class Icons {
     private static final Map<String, String> PATHS = Map.ofEntries(
             Map.entry("lock", "M4.5 7h7A1.5 1.5 0 0 1 13 8.5v4A1.5 1.5 0 0 1 11.5 14h-7A1.5 1.5 0 0 1 3 12.5v-4A1.5 1.5 0 0 1 4.5 7z M5 7 V5 a3 3 0 0 1 6 0 v2"),

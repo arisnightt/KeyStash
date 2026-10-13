@@ -4,7 +4,6 @@ import javafx.application.HostServices;
 
 import java.net.URI;
 
-/** Открывает URL во внешнем браузере. Разрешены только http и https. */
 public final class UrlOpener {
     private UrlOpener() {}
 
