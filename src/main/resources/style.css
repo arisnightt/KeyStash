@@ -1,0 +1,309 @@
+/* ============ ТОКЕНЫ (Windows 11 / Fluent) — из HTML-макета ============ */
+.root {
+    -ks-accent: #0067c0;
+    -ks-accent-h: #1975c5;
+    -ks-on-accent: white;
+    -ks-mica: #f3f3f3;
+    -ks-layer: #fbfbfb;
+    -ks-card: white;
+    -ks-card-h: #f9f9f9;
+    -ks-hover: rgba(0,0,0,0.045);
+    -ks-press: rgba(0,0,0,0.03);
+    -ks-sel: rgba(0,0,0,0.06);
+    -ks-stroke: rgba(0,0,0,0.0578);
+    -ks-stroke-ctl: rgba(0,0,0,0.1);
+    -ks-text: #1a1a1a;
+    -ks-text2: #5f5f5f;
+    -ks-text3: #8a8a8a;
+    -ks-ok: #0f7b0f;
+    -ks-warn: #9d5d00;
+    -ks-bad: #c42b1c;
+    -ks-fav: #c19c00;
+
+    -fx-font-family: "Segoe UI Variable Text", "Segoe UI", "Noto Sans", "DejaVu Sans", sans-serif;
+    -fx-font-size: 14px;
+    -fx-background-color: -ks-mica;
+}
+
+.root.dark {
+    -ks-accent: #60cdff;
+    -ks-accent-h: #4cb8ea;
+    -ks-on-accent: black;
+    -ks-mica: #202020;
+    -ks-layer: #2b2b2b;
+    -ks-card: #2d2d2d;
+    -ks-card-h: #323232;
+    -ks-hover: rgba(255,255,255,0.06);
+    -ks-press: rgba(255,255,255,0.04);
+    -ks-sel: rgba(255,255,255,0.09);
+    -ks-stroke: rgba(255,255,255,0.08);
+    -ks-stroke-ctl: rgba(255,255,255,0.1);
+    -ks-text: white;
+    -ks-text2: #cfcfcf;
+    -ks-text3: #9d9d9d;
+    -ks-ok: #6ccb5f;
+    -ks-warn: #fce100;
+    -ks-bad: #ff99a4;
+    -ks-fav: #fce100;
+}
+
+/* ============ БАЗА ============ */
+.label { -fx-text-fill: -ks-text; }
+.muted { -fx-text-fill: -ks-text3; -fx-font-size: 12px; }
+.muted-s { -fx-text-fill: -ks-text2; -fx-font-size: 12px; }
+.muted-s-14 { -fx-text-fill: -ks-text2; }
+.h1 { -fx-font-size: 20px; -fx-font-weight: bold; }
+.h2 { -fx-font-size: 24px; -fx-font-weight: bold; }
+.h3 { -fx-font-size: 20px; -fx-font-weight: bold; }
+.row-title { -fx-font-weight: bold; }
+.mono { -fx-font-family: "Cascadia Mono", "Consolas", "DejaVu Sans Mono", monospace; }
+.status-ok { -fx-text-fill: -ks-ok; -fx-font-size: 12px; }
+.status-ok .label { -fx-text-fill: -ks-ok; }
+
+/* иконки: обводка вместо заливки */
+.ks-icon > .icon {
+    -fx-fill: transparent;
+    -fx-stroke: -ks-text2;
+    -fx-stroke-width: 1.4;
+    -fx-stroke-line-cap: round;
+    -fx-stroke-line-join: round;
+}
+.ks-btn .ks-icon > .icon { -fx-stroke: -ks-text; }
+.ks-btn-pri .ks-icon > .icon { -fx-stroke: -ks-on-accent; }
+.ks-btn-dng .ks-icon > .icon { -fx-stroke: -ks-bad; }
+.ks-icon.fav > .icon,
+.ks-btn .ks-icon.fav > .icon { -fx-stroke: -ks-fav; -fx-fill: -ks-fav; }
+.ks-icon.on-accent > .icon { -fx-stroke: -ks-on-accent; }
+.status-ok .ks-icon > .icon { -fx-stroke: -ks-ok; }
+.toast .ks-icon > .icon { -fx-stroke: -ks-ok; }
+
+.logo { -fx-fill: -ks-accent; }
+
+/* ============ ЗАГОЛОВОК ============ */
+.titlebar { -fx-pref-height: 40; -fx-padding: 0 8 0 12; }
+
+/* ============ КНОПКИ ============ */
+.ks-btn {
+    -fx-background-color: -ks-card;
+    -fx-background-radius: 4;
+    -fx-border-color: -ks-stroke-ctl;
+    -fx-border-radius: 4;
+    -fx-padding: 0 12 0 12;
+    -fx-pref-height: 32;
+    -fx-min-height: 32;
+    -fx-text-fill: -ks-text;
+    -fx-graphic-text-gap: 8;
+    -fx-cursor: hand;
+}
+.ks-btn:hover { -fx-background-color: -ks-card-h; }
+.ks-btn:pressed { -fx-background-color: -ks-press; -fx-text-fill: -ks-text2; }
+.ks-btn:focused { -fx-border-color: -ks-accent; }
+.ks-btn-pri { -fx-background-color: -ks-accent; -fx-border-color: -ks-accent; -fx-text-fill: -ks-on-accent; }
+.ks-btn-pri:hover { -fx-background-color: -ks-accent-h; }
+.ks-btn-pri:pressed { -fx-background-color: -ks-accent-h; -fx-text-fill: -ks-on-accent; }
+.ks-btn-sub { -fx-background-color: transparent; -fx-border-color: transparent; }
+.ks-btn-sub:hover { -fx-background-color: -ks-hover; }
+.ks-btn-sub:pressed { -fx-background-color: -ks-press; }
+.ks-btn-ic { -fx-padding: 0; -fx-pref-width: 32; -fx-min-width: 32; -fx-max-width: 32; }
+.ks-btn-dng { -fx-text-fill: -ks-bad; }
+.ks-btn-sub { -fx-font-size: 12px; }
+.ks-btn-ic { -fx-font-size: 14px; }
+
+/* ============ НАВИГАЦИЯ ============ */
+.nav { -fx-padding: 4 8 8 8; }
+.ks-search {
+    -fx-background-color: -ks-card;
+    -fx-background-radius: 4;
+    -fx-border-color: -ks-stroke-ctl -ks-stroke-ctl -ks-text3 -ks-stroke-ctl;
+    -fx-border-radius: 4;
+    -fx-pref-height: 32;
+    -fx-padding: 0 10 0 32;
+    -fx-text-fill: -ks-text;
+    -fx-prompt-text-fill: -ks-text3;
+    -fx-highlight-fill: -ks-accent;
+    -fx-highlight-text-fill: -ks-on-accent;
+}
+.ks-search:focused { -fx-border-color: -ks-stroke-ctl -ks-stroke-ctl -ks-accent -ks-stroke-ctl; -fx-border-width: 1 1 2 1; }
+
+.ni {
+    -fx-background-color: transparent;
+    -fx-background-radius: 4;
+    -fx-border-color: transparent;
+    -fx-padding: 0 10 0 10;
+    -fx-pref-height: 36;
+    -fx-min-height: 36;
+    -fx-alignment: center-left;
+    -fx-cursor: hand;
+}
+.ni:hover { -fx-background-color: -ks-hover; }
+.ni:selected { -fx-background-color: -ks-sel; }
+.ni:focused { -fx-background-color: -ks-hover; }
+.ni:selected:focused { -fx-background-color: -ks-sel; }
+
+.tag {
+    -fx-font-size: 12px;
+    -fx-text-fill: -ks-text2;
+    -fx-background-color: -ks-card;
+    -fx-background-radius: 10;
+    -fx-border-color: -ks-stroke-ctl;
+    -fx-border-radius: 10;
+    -fx-padding: 1 8 1 8;
+}
+
+/* ============ КОНТЕНТ ============ */
+.main {
+    -fx-background-color: -ks-layer;
+    -fx-background-radius: 8 0 0 0;
+    -fx-border-color: -ks-stroke;
+    -fx-border-width: 1 0 0 1;
+    -fx-border-radius: 8 0 0 0;
+}
+.list { -fx-border-color: -ks-stroke; -fx-border-width: 0 1 0 0; }
+
+.ks-scroll, .ks-scroll > .viewport { -fx-background-color: transparent; -fx-background: transparent; }
+.ks-scroll { -fx-padding: 0; }
+
+.ks-combo { -fx-background-color: transparent; -fx-padding: 0; }
+.ks-combo > .list-cell { -fx-text-fill: -ks-text2; -fx-font-size: 12px; -fx-background-color: transparent; }
+.ks-combo > .arrow-button { -fx-background-color: transparent; }
+.ks-combo:focused { -fx-background-color: transparent; }
+
+.row {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8;
+    -fx-border-color: transparent;
+    -fx-padding: 8 10 8 10;
+    -fx-alignment: center-left;
+    -fx-cursor: hand;
+}
+.row:hover { -fx-background-color: -ks-hover; }
+.row.selected { -fx-background-color: -ks-sel; }
+.row:focused { -fx-background-color: -ks-hover; }
+.row.selected:focused { -fx-background-color: -ks-sel; }
+
+/* ============ ДЕТАЛИ ============ */
+.detail { -fx-padding: 24 32 24 32; }
+.card {
+    -fx-background-color: -ks-card;
+    -fx-background-radius: 8;
+    -fx-border-color: -ks-stroke;
+    -fx-border-radius: 8;
+}
+.fld { -fx-padding: 10 16 10 16; -fx-min-height: 56; }
+.fld-sep { -fx-border-color: -ks-stroke transparent transparent transparent; -fx-border-width: 1 0 0 0; }
+
+.hyperlink { -fx-text-fill: -ks-accent; -fx-border-color: transparent; -fx-padding: 0; }
+.hyperlink:hover { -fx-underline: true; }
+.hyperlink:visited { -fx-text-fill: -ks-accent; }
+
+.bar { -fx-background-color: -ks-sel; -fx-background-radius: 2; }
+.bar-fill { -fx-background-color: -ks-ok; -fx-background-radius: 2; }
+
+/* ============ СТАТУС-БАР ============ */
+.status {
+    -fx-pref-height: 28;
+    -fx-padding: 0 16 0 16;
+    -fx-background-color: -ks-layer;
+    -fx-border-color: -ks-stroke transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+/* ============ ДИАЛОГ ГЕНЕРАТОРА ============ */
+.dlg-footer {
+    -fx-padding: 20 24 20 24;
+    -fx-background-color: -ks-mica;
+    -fx-border-color: -ks-stroke transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+.out {
+    -fx-padding: 8 8 8 16;
+    -fx-background-color: -ks-card;
+    -fx-background-radius: 8;
+    -fx-border-color: -ks-stroke-ctl;
+    -fx-border-radius: 8;
+}
+.gen-ch { -fx-fill: -ks-text; -fx-font-size: 16px; }
+.gen-ch.digit { -fx-fill: -ks-accent; }
+.gen-ch.sym { -fx-fill: -ks-bad; }
+.err-text { -fx-fill: -ks-text3; -fx-font-size: 14px; }
+
+.seg { -fx-padding: 3; -fx-background-color: -ks-sel; -fx-background-radius: 4; }
+.seg-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: 3;
+    -fx-text-fill: -ks-text;
+    -fx-pref-height: 28;
+    -fx-cursor: hand;
+}
+.seg-btn:selected { -fx-background-color: -ks-card; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 2, 0, 0, 1); }
+.seg-btn:focused { -fx-background-color: transparent; }
+.seg-btn:selected:focused { -fx-background-color: -ks-card; }
+
+.slider .track { -fx-background-color: -ks-sel; -fx-background-radius: 2; -fx-pref-height: 4; }
+.slider .thumb { -fx-background-color: -ks-accent; -fx-background-insets: 0; -fx-background-radius: 10; -fx-padding: 8; }
+.slider:focused .thumb { -fx-background-color: -ks-accent; }
+
+.check-box { -fx-text-fill: -ks-text; -fx-cursor: hand; }
+.check-box > .box {
+    -fx-background-color: -ks-card;
+    -fx-background-insets: 0;
+    -fx-background-radius: 4;
+    -fx-border-color: -ks-text3;
+    -fx-border-radius: 4;
+    -fx-padding: 4;
+}
+.check-box:selected > .box { -fx-background-color: -ks-accent; -fx-border-color: -ks-accent; }
+.check-box > .box > .mark { -fx-background-color: transparent; }
+.check-box:selected > .box > .mark { -fx-background-color: -ks-on-accent; }
+.check-box:focused > .box { -fx-border-color: -ks-accent; }
+
+/* ============ ТОСТ ============ */
+.toast {
+    -fx-background-color: -ks-card;
+    -fx-background-radius: 8;
+    -fx-padding: 10 16 10 16;
+    -fx-graphic-text-gap: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 16, 0, 0, 6);
+}
+
+/* ============ ФОРМА ЗАПИСИ ============ */
+.ks-input {
+    -fx-background-color: -ks-card;
+    -fx-background-radius: 4;
+    -fx-border-color: -ks-stroke-ctl -ks-stroke-ctl -ks-text3 -ks-stroke-ctl;
+    -fx-border-radius: 4;
+    -fx-pref-height: 32;
+    -fx-padding: 0 10 0 10;
+    -fx-text-fill: -ks-text;
+    -fx-prompt-text-fill: -ks-text3;
+    -fx-highlight-fill: -ks-accent;
+    -fx-highlight-text-fill: -ks-on-accent;
+}
+.ks-input:focused { -fx-border-color: -ks-stroke-ctl -ks-stroke-ctl -ks-accent -ks-stroke-ctl; -fx-border-width: 1 1 2 1; }
+
+.ks-area {
+    -fx-background-color: -ks-card;
+    -fx-background-radius: 4;
+    -fx-border-color: -ks-stroke-ctl -ks-stroke-ctl -ks-text3 -ks-stroke-ctl;
+    -fx-border-radius: 4;
+    -fx-text-fill: -ks-text;
+    -fx-prompt-text-fill: -ks-text3;
+    -fx-highlight-fill: -ks-accent;
+    -fx-highlight-text-fill: -ks-on-accent;
+}
+.ks-area .content { -fx-background-color: transparent; }
+.ks-area:focused { -fx-border-color: -ks-stroke-ctl -ks-stroke-ctl -ks-accent -ks-stroke-ctl; -fx-border-width: 1 1 2 1; }
+
+.ks-input-combo {
+    -fx-background-color: -ks-card;
+    -fx-background-radius: 4;
+    -fx-border-color: -ks-stroke-ctl -ks-stroke-ctl -ks-text3 -ks-stroke-ctl;
+    -fx-border-radius: 4;
+    -fx-pref-height: 32;
+}
+.ks-input-combo > .text-field { -fx-background-color: transparent; -fx-text-fill: -ks-text; -fx-prompt-text-fill: -ks-text3; }
+.ks-input-combo > .arrow-button { -fx-background-color: transparent; }
+.ks-input-combo > .arrow-button > .arrow { -fx-background-color: -ks-text2; }
+.ks-input-combo:focused { -fx-border-color: -ks-stroke-ctl -ks-stroke-ctl -ks-accent -ks-stroke-ctl; }
+
+.err-label { -fx-text-fill: -ks-bad; -fx-font-size: 12px; }
